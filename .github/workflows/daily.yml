@@ -38,3 +38,18 @@ jobs:
         run: cargo build --release --manifest-path crates/leiden-run/Cargo.toml
       - name: Build CSR, run Leiden, write community_id + heat
         run: node --experimental-strip-types scripts/leiden-local.ts
+
+  extract:
+    needs: leiden
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - name: Gemini label + insight on hot communities
+        run: node --experimental-strip-types scripts/extract-once.ts

@@ -9,6 +9,9 @@ type CommunityRow = {
   heat: number | null;
   label_vi: string | null;
   size: number | null;
+  insight: string | null;
+  evidence_json: string | null;
+  counter: string | null;
 };
 
 type DocRow = {
@@ -20,7 +23,10 @@ type DocRow = {
 
 export async function handleDigest(env: RadarEnv, runDay: string, asJson: boolean): Promise<Response> {
   const { results } = await env.DB.prepare(
-    `SELECT stable_key, heat, label_vi, size FROM communities WHERE run_day = ? ORDER BY heat DESC LIMIT 20`,
+    `SELECT c.stable_key, c.heat, c.label_vi, c.size, e.insight, e.evidence_json, e.counter
+     FROM communities c
+     LEFT JOIN extracts e ON e.scope = 'community' AND e.scope_id = c.id
+     WHERE c.run_day = ? ORDER BY c.heat DESC LIMIT 20`,
   )
     .bind(runDay)
     .all<CommunityRow>();
@@ -49,12 +55,28 @@ export async function handleDigest(env: RadarEnv, runDay: string, asJson: boolea
   }
   let body: string;
   if (!leidenMissing) {
-    body = `<ol>${rows
+    body = rows
       .map((row) => {
         const label = escapeHtml(row.label_vi ?? row.stable_key ?? "community");
-        return `<li><strong>${label}</strong> heat ${row.heat ?? 0} · ${row.size ?? 0} nodes</li>`;
+        const insight = row.insight ? `<p>${escapeHtml(row.insight)}</p>` : "";
+        let ev = "";
+        if (row.evidence_json) {
+          try {
+            const items = JSON.parse(row.evidence_json) as Array<{ claim: string; url: string; source: string }>;
+            ev = `<ul>${items
+              .map((x) => {
+                const href = x.url.startsWith("http") ? x.url : "#";
+                return `<li>${escapeHtml(x.claim)} <a href="${escapeHtml(href)}">${escapeHtml(x.source)}</a></li>`;
+              })
+              .join("")}</ul>`;
+          } catch {
+            ev = "";
+          }
+        }
+        const counter = row.counter ? `<p><em>Phản biện:</em> ${escapeHtml(row.counter)}</p>` : "";
+        return `<section><h2>${label} <small>heat ${Math.round(row.heat ?? 0)} · ${row.size ?? 0}</small></h2>${insight}${ev}${counter}</section>`;
       })
-      .join("")}</ol>`;
+      .join("");
   } else if (docs.length > 0) {
     body = `<p>Chưa Leiden — tin thô theo interactions.</p><ol>${docs
       .map((d) => {
