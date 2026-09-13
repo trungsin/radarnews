@@ -11,6 +11,13 @@ type CommunityRow = {
   size: number | null;
 };
 
+type DocRow = {
+  title: string;
+  url: string;
+  platform: string;
+  interactions: number;
+};
+
 export async function handleDigest(env: RadarEnv, runDay: string, asJson: boolean): Promise<Response> {
   const { results } = await env.DB.prepare(
     `SELECT stable_key, heat, label_vi, size FROM communities WHERE run_day = ? ORDER BY heat DESC LIMIT 20`,
@@ -19,28 +26,45 @@ export async function handleDigest(env: RadarEnv, runDay: string, asJson: boolea
     .all<CommunityRow>();
   const rows = results ?? [];
   const leidenMissing = rows.length === 0;
+  const docs = leidenMissing
+    ? (
+        await env.DB.prepare(
+          `SELECT title, url, platform, interactions FROM documents WHERE run_day = ? ORDER BY interactions DESC LIMIT 20`,
+        )
+          .bind(runDay)
+          .all<DocRow>()
+      ).results ?? []
+    : [];
   if (asJson) {
     return jsonResponse(
       {
         question: QUESTION,
         run_day: runDay,
-        status: leidenMissing ? "pending" : "ok",
+        status: leidenMissing ? (docs.length ? "docs" : "pending") : "ok",
         communities: rows,
+        documents: docs,
       },
-      leidenMissing,
+      true,
     );
   }
-  const items = rows
-    .map((row) => {
-      const label = escapeHtml(row.label_vi ?? row.stable_key ?? "community");
-      const heat = row.heat ?? 0;
-      const size = row.size ?? 0;
-      return `<li><strong>${label}</strong> heat ${heat} · ${size} nodes</li>`;
-    })
-    .join("");
-  const body = leidenMissing
-    ? "<p>cập nhật graph chưa xong</p>"
-    : `<ol>${items}</ol>`;
+  let body: string;
+  if (!leidenMissing) {
+    body = `<ol>${rows
+      .map((row) => {
+        const label = escapeHtml(row.label_vi ?? row.stable_key ?? "community");
+        return `<li><strong>${label}</strong> heat ${row.heat ?? 0} · ${row.size ?? 0} nodes</li>`;
+      })
+      .join("")}</ol>`;
+  } else if (docs.length > 0) {
+    body = `<p>Chưa Leiden — tin thô theo interactions.</p><ol>${docs
+      .map((d) => {
+        const href = d.url.startsWith("https://") || d.url.startsWith("http://") ? d.url : "#";
+        return `<li><a href="${escapeHtml(href)}">${escapeHtml(d.title)}</a> · ${escapeHtml(d.platform)} · ${d.interactions}</li>`;
+      })
+      .join("")}</ol>`;
+  } else {
+    body = "<p>cập nhật graph chưa xong</p>";
+  }
   const html = `<!doctype html>
 <html lang="vi">
 <head>
