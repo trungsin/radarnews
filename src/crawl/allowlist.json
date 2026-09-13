@@ -9,7 +9,7 @@
     {
       "id": "hf-models",
       "kind": "hf",
-      "url": "https://huggingface.co/api/models?sort=trending&limit=50",
+      "url": "https://huggingface.co/api/models?sort=likes&direction=-1&limit=50",
       "enabled": true
     },
     {
@@ -34,7 +34,7 @@
       "id": "rss-openai",
       "kind": "rss",
       "url": "https://openai.com/blog/rss.xml",
-      "enabled": true
+      "enabled": false
     }
   ]
 }

@@ -9,6 +9,7 @@
     "migrate:local": "wrangler d1 migrations apply radarnews --local"
   },
   "devDependencies": {
+    "@types/node": "^26.5.1",
     "typescript": "^5.9.2",
     "wrangler": "^4.34.0"
   }

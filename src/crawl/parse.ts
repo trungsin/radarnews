@@ -47,7 +47,7 @@ function parseHf(text: string): NormalizedDoc[] {
       title: id,
       published_at: row.lastModified ? String(row.lastModified) : null,
       author: id.split("/")[0] ?? null,
-      interactions: num(row.likes) + num(row.downloads),
+      interactions: num(row.likes),
       platform: "hf",
       raw_excerpt: String(row.pipeline_tag ?? ""),
     };
