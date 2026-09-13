@@ -115,7 +115,7 @@ if (comms.length === 0) {
   process.exit(0);
 }
 
-const stmts: string[] = [];
+const stmts: string[] = [`DELETE FROM extracts WHERE scope = 'community' AND scope_id LIKE 'c_${RUN_DAY}_%';`];
 let labelled = 0;
 for (const c of comms) {
   const docs = resultsOf<DocRow>(
