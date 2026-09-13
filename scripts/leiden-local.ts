@@ -66,12 +66,11 @@ const interactionsByNode = new Map<string, number>();
 for (const doc of docs) {
   const docNode = `doc:${doc.id}`;
   interactionsByNode.set(docNode, doc.interactions);
-  const ents = extractEntities(doc);
-  for (const e of ents) {
+  for (const e of extractEntities(doc)) {
     pairs.push({ a: docNode, b: `ent:${e.kind}:${e.name}`, w: e.kind === "concept" ? 0.7 : 1 });
   }
-  // Weak provenance so an isolated doc still has one edge; never a topic hub.
-  pairs.push({ a: docNode, b: `src:${doc.source}`, w: 0.03 });
+  // No src node: docs connect ONLY through shared entities. Entity-less docs
+  // drop out as noise rather than clustering by platform.
 }
 
 const graph = undirectedGraph(pairs);
