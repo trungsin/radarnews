@@ -1,0 +1,40 @@
+{
+  "sources": [
+    {
+      "id": "hn-ai",
+      "kind": "hn",
+      "url": "https://hn.algolia.com/api/v1/search_by_date?query=AI%20LLM%20agent&tags=story&hitsPerPage=50",
+      "enabled": true
+    },
+    {
+      "id": "hf-models",
+      "kind": "hf",
+      "url": "https://huggingface.co/api/models?sort=trending&limit=50",
+      "enabled": true
+    },
+    {
+      "id": "gh-search",
+      "kind": "github",
+      "url": "https://api.github.com/search/repositories?q=llm+OR+agent&sort=updated&per_page=30",
+      "enabled": true
+    },
+    {
+      "id": "arxiv-cs",
+      "kind": "arxiv",
+      "url": "https://export.arxiv.org/api/query?search_query=all:agent+OR+all:LLM&start=0&max_results=20",
+      "enabled": true
+    },
+    {
+      "id": "bsky-ai",
+      "kind": "bluesky",
+      "url": "https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=AI%20agent&limit=50",
+      "enabled": true
+    },
+    {
+      "id": "rss-openai",
+      "kind": "rss",
+      "url": "https://openai.com/blog/rss.xml",
+      "enabled": true
+    }
+  ]
+}

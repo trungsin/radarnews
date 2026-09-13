@@ -1,0 +1,32 @@
+name: leiden-writeback
+on:
+  repository_dispatch:
+    types: [leiden-ready]
+  workflow_dispatch:
+    inputs:
+      run_day:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+
+jobs:
+  leiden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build leiden-run
+        run: cargo build --release --manifest-path crates/leiden-run/Cargo.toml
+      - name: Writeback
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          RUN_DAY: ${{ github.event.client_payload.run_day || inputs.run_day }}
+          RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
+        run: |
+          set -euo pipefail
+          KEY="runs/${RUN_DAY}/${RUN_ID}/graph.csr"
+          npx wrangler r2 object get radarnews-csr "$KEY" --file /tmp/graph.csr --remote
+          ./crates/leiden-run/target/release/leiden-run --csr /tmp/graph.csr --out /tmp/assignment.json
+          node --experimental-strip-types scripts/leiden-writeback.ts /tmp/assignment.json "$RUN_DAY" "$RUN_ID"

@@ -1,0 +1,61 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "radarnews-pipeline",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-04",
+  "workers_dev": false,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "triggers": {
+    "crons": ["0 0 * * *"]
+  },
+  "limits": {
+    "cpu_ms": 300000
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "radarnews",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "CSR_BUCKET",
+      "bucket_name": "radarnews-csr"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "CRAWL_QUEUE",
+        "queue": "radarnews-crawl"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "radarnews-crawl",
+        "max_batch_size": 6,
+        "max_batch_timeout": 5,
+        "max_retries": 3,
+        "dead_letter_queue": "radarnews-crawl-dlq",
+        "max_concurrency": 1
+      },
+      {
+        "queue": "radarnews-crawl-dlq",
+        "max_batch_size": 6,
+        "max_retries": 0
+      }
+    ]
+  },
+  "workflows": [
+    {
+      "binding": "RADAR_WORKFLOW",
+      "name": "radarnews-daily",
+      "class_name": "RadarWorkflow"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "hits": [
+    {
+      "objectID": "1",
+      "title": "Test LLM agent",
+      "url": "https://example.com/post",
+      "created_at": "2026-09-13T00:00:00.000Z",
+      "author": "alice",
+      "points": 10,
+      "num_comments": 2
+    }
+  ]
+}
