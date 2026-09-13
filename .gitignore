@@ -1,0 +1,11 @@
+node_modules/
+.dev.vars
+.wrangler/
+dist/
+worker-configuration.d.ts
+*.log
+.DS_Store
+
+# agent handoff / local state
+.omp-handoff.snapshot.txt
+.agentkit/
