@@ -118,11 +118,18 @@ const ranked = [...membersByComm.entries()]
 for (const c of ranked) {
   rank += 1;
   const cid = `c_${RUN_DAY}_${c.community}`;
-  const entLabels = c.labels.filter((l) => l.startsWith("ent:")).sort().slice(0, 8).join("|");
-  const stableKey = `sk_${Buffer.from(entLabels).toString("base64url").slice(0, 24)}`;
+  const entNames = c.labels
+    .filter((l) => l.startsWith("ent:"))
+    .map((l) => l.split(":").slice(2).join(":"))
+    .sort();
+  const entLabels = entNames.slice(0, 8).join("|");
+  // Stable identity for day-over-day matching (NOT a secret; base64 of entity names).
+  const stableKey = `ck_${Buffer.from(entLabels).toString("base64url").slice(0, 24)}`;
+  // Provisional readable label from top entities; Gemini overwrites with a VN label.
+  const provisional = entNames.slice(0, 3).join(", ") || "cụm chưa gán nhãn";
   stmts.push(
-    `INSERT INTO communities (id, run_day, run_id, algo, resolution, size, heat, rank, stable_key)
-     VALUES (${sqlStr(cid)}, ${sqlStr(RUN_DAY)}, ${sqlStr(RUN_ID)}, 'leiden', NULL, ${c.docLabels.length}, ${c.heat.toFixed(4)}, ${rank}, ${sqlStr(stableKey)});`,
+    `INSERT INTO communities (id, run_day, run_id, algo, resolution, size, heat, rank, stable_key, label_vi)
+     VALUES (${sqlStr(cid)}, ${sqlStr(RUN_DAY)}, ${sqlStr(RUN_ID)}, 'leiden', NULL, ${c.docLabels.length}, ${c.heat.toFixed(4)}, ${rank}, ${sqlStr(stableKey)}, ${sqlStr(provisional)});`,
   );
   for (const l of c.docLabels) {
     stmts.push(
