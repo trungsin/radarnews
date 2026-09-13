@@ -8,6 +8,7 @@ import { writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { encodeCsr, undirectedGraph } from "../src/graph/csr.ts";
+import { extractEntities } from "../src/graph/entities.ts";
 
 const RUN_DAY = new Date().toISOString().slice(0, 10);
 const RUN_ID = `leidenlocal_${RUN_DAY}`;
@@ -59,22 +60,18 @@ if (docs.length === 0) {
   process.exit(0);
 }
 
-// Entity-document graph. Down-weight source provenance so platform stars do not merge everything.
+// Entity-document graph via rule-based extraction. No platform-host hubs.
 const pairs: Array<{ a: string; b: string; w: number }> = [];
 const interactionsByNode = new Map<string, number>();
 for (const doc of docs) {
   const docNode = `doc:${doc.id}`;
   interactionsByNode.set(docNode, doc.interactions);
-  pairs.push({ a: docNode, b: `src:${doc.source}`, w: 0.05 });
-  if ((doc.platform === "github" || doc.platform === "hf") && doc.title.includes("/")) {
-    pairs.push({ a: docNode, b: `ent:${doc.platform}:${doc.title.toLowerCase()}`, w: 1 });
-  } else {
-    try {
-      pairs.push({ a: docNode, b: `ent:host:${new URL(doc.url).host}`, w: 0.5 });
-    } catch {
-      /* skip bad url */
-    }
+  const ents = extractEntities(doc);
+  for (const e of ents) {
+    pairs.push({ a: docNode, b: `ent:${e.kind}:${e.name}`, w: e.kind === "concept" ? 0.7 : 1 });
   }
+  // Weak provenance so an isolated doc still has one edge; never a topic hub.
+  pairs.push({ a: docNode, b: `src:${doc.source}`, w: 0.03 });
 }
 
 const graph = undirectedGraph(pairs);
