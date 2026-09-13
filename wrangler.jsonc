@@ -3,7 +3,7 @@
   "name": "radarnews-pipeline",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-04",
-  "workers_dev": false,
+  "workers_dev": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
@@ -18,7 +18,7 @@
     {
       "binding": "DB",
       "database_name": "radarnews",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "40ef7d9e-b946-492a-8018-5900bfab85c7",
       "migrations_dir": "migrations"
     }
   ],
